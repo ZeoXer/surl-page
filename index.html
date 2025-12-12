@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>surl 短網址服務</title>
+    <meta
+      name="description"
+      content="快速、可靠的短網址生成服務，支援網頁與 LINE Bot 兩種轉換方式。"
+    />
+    <meta
+      name="keywords"
+      content="短網址, Short URL, LINE Bot, NestJS, Tailwind CSS"
+    />
+    <meta name="author" content="ZeoXer" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="./assets/ZeoXer-surl.png"
+      sizes="32x32"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="./assets/ZeoXer-surl.png"
+      sizes="180x180"
+    />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#f97316" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "Noto Sans TC", "sans-serif"],
+            },
+            colors: {
+              "line-green": "#06C755",
+              "primary-orange": "#f97316", // 亮橘色 (Tailwind orange-600)
+              "primary-hover": "#ea580c", // 深橘色 (Tailwind orange-700)
+              "result-bg": "#fff7ed", // 極淺橘色 (Tailwind orange-50)
+              "result-border": "#fdb5a1", // 淺橘色邊框 (類似 Tailwind orange-300)
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* 確保全高且背景顏色 */
+      body {
+        background-color: #f3f4f6;
+        min-height: 100vh;
+      }
+    </style>
+  </head>
+  <body class="font-sans flex items-center justify-center p-4">
+    <main
+      class="w-full max-w-2xl bg-white shadow-xl rounded-xl p-8 space-y-10 md:p-12 transition-all duration-300"
+    >
+      <div class="flex justify-center -mt-4 mb-8">
+        <img
+          src="./assets/ZeoXer-surl.png"
+          alt="surl Logo"
+          class="w-auto h-44"
+        />
+      </div>
+
+      <!-- 標題區塊 -->
+      <header class="text-center space-y-2">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">
+          surl 短網址轉換服務
+        </h1>
+        <p class="text-gray-500">快速產生短網址，隨時隨地分享！</p>
+      </header>
+
+      <!-- 1. 短網址服務區塊 -->
+      <section class="space-y-6">
+        <h2 class="text-2xl font-semibold text-gray-700 border-b pb-2">
+          線上轉換
+        </h2>
+        <!-- 輸入表單 -->
+        <div
+          class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3"
+        >
+          <input
+            type="url"
+            id="longUrlInput"
+            placeholder="貼上您的長網址 (http://... 或 https://...)"
+            class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-primary-orange focus:border-primary-orange transition duration-150"
+            required
+          />
+          <button
+            id="shortenButton"
+            class="w-full md:w-auto px-6 py-3 text-white font-medium bg-primary-orange rounded-lg hover:bg-primary-hover transition duration-150 shadow-md hover:shadow-lg disabled:bg-gray-400"
+          >
+            產生短網址
+          </button>
+        </div>
+
+        <!-- 結果顯示區塊 -->
+        <div
+          id="resultContainer"
+          class="hidden mt-4 p-4 bg-result-bg border-l-4 border-primary-orange rounded-lg transition-all duration-300 shadow-md"
+        >
+          <p
+            id="resultText"
+            class="text-lg font-medium text-gray-700 break-all"
+          ></p>
+          <button
+            id="copyButton"
+            class="mt-2 text-md text-white px-4 py-2 bg-primary-orange rounded-md hover:bg-primary-hover transition duration-150 shadow-sm"
+            onclick="copyToClipboard()"
+          >
+            複製
+          </button>
+        </div>
+
+        <!-- 錯誤/載入訊息 -->
+        <p id="message" class="text-sm text-red-500 font-medium"></p>
+        <div
+          id="loadingIndicator"
+          class="hidden text-center text-primary-orange font-medium"
+        >
+          正在轉換中... 請稍候
+        </div>
+      </section>
+
+      <!-- 2. LINE Bot 連結區塊 -->
+      <section class="space-y-6 pt-6 border-t border-gray-200">
+        <h2 class="text-2xl font-semibold text-gray-700">LINE Bot 服務</h2>
+        <div class="flex flex-col items-center text-center space-y-4">
+          <p class="text-gray-600">
+            您也可以加入 LINE Bot 好友，直接在聊天室中轉換網址！
+          </p>
+
+          <!-- LINE Bot QR Code 容器 -->
+          <div
+            class="w-32 h-32 p-1 bg-white border border-line-green shadow-lg rounded-lg"
+          >
+            <img
+              src="https://qr-official.line.me/gs/M_323uozmg_GW.png?oat_content=qr"
+            />
+          </div>
+
+          <!-- LINE 加好友按鈕 -->
+          <a href="https://lin.ee/ZfRhr4xq"
+            ><img
+              src="https://scdn.line-apps.com/n/line_add_friends/btn/zh-Hant.png"
+              alt="加入好友"
+              height="16"
+              width="140"
+          /></a>
+          <p class="text-xs text-gray-400">LINE Bot ID: @323uozmg</p>
+        </div>
+      </section>
+      <section class="space-y-4 pt-6 border-t border-gray-200">
+        <h2 class="text-2xl font-semibold text-gray-700">關於作者</h2>
+        <div class="text-gray-600">
+          <p class="mb-3">
+            此服務由 ZeoXer 開發與維護，有任何問題或建議也歡迎聯繫我！
+          </p>
+          <div class="flex space-x-6 justify-center">
+            <!-- GitHub Link -->
+            <a
+              href="https://github.com/ZeoXer"
+              target="_blank"
+              title="GitHub 連結"
+              class="text-primary-orange hover:text-primary-hover transition duration-150 p-2 rounded-full hover:bg-orange-100"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-6 h-6"
+              >
+                <rect width="24" height="24" fill="none" />
+                <path
+                  d="M12,2A10,10,0,0,0,8.84,21.5c.5.08.66-.23.66-.5V19.31C6.73,19.91,6.14,18,6.14,18A2.69,2.69,0,0,0,5,16.5c-.91-.62.07-.6.07-.6a2.1,2.1,0,0,1,1.53,1,2.15,2.15,0,0,0,2.91.83,2.16,2.16,0,0,1,.63-1.34C8,16.17,5.62,15.31,5.62,11.5a3.87,3.87,0,0,1,1-2.71,3.58,3.58,0,0,1,.1-2.64s.84-.27,2.75,1a9.63,9.63,0,0,1,5,0c1.91-1.29,2.75-1,2.75-1a3.58,3.58,0,0,1,.1,2.64,3.87,3.87,0,0,1,1,2.71c0,3.82-2.34,4.66-4.57,4.91a2.39,2.39,0,0,1,.69,1.85V21c0,.27.16.59.67.5A10,10,0,0,0,12,2Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </a>
+            <!-- LinkedIn Link -->
+            <a
+              href="https://linkedin.com/in/chia-hsun-yang"
+              target="_blank"
+              title="LinkedIn 連結"
+              class="text-primary-orange hover:text-primary-hover transition duration-150 p-2 rounded-full hover:bg-orange-100"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g
+                  id="SVGRepo_tracerCarrier"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></g>
+                <g id="SVGRepo_iconCarrier">
+                  <path
+                    d="M18.72 3.99997H5.37C5.19793 3.99191 5.02595 4.01786 4.86392 4.07635C4.70189 4.13484 4.55299 4.22471 4.42573 4.34081C4.29848 4.45692 4.19537 4.59699 4.12232 4.75299C4.04927 4.909 4.0077 5.07788 4 5.24997V18.63C4.01008 18.9901 4.15766 19.3328 4.41243 19.5875C4.6672 19.8423 5.00984 19.9899 5.37 20H18.72C19.0701 19.9844 19.4002 19.8322 19.6395 19.5761C19.8788 19.32 20.0082 18.9804 20 18.63V5.24997C20.0029 5.08247 19.9715 4.91616 19.9078 4.76122C19.8441 4.60629 19.7494 4.466 19.6295 4.34895C19.5097 4.23191 19.3672 4.14059 19.2108 4.08058C19.0544 4.02057 18.8874 3.99314 18.72 3.99997ZM9 17.34H6.67V10.21H9V17.34ZM7.89 9.12997C7.72741 9.13564 7.5654 9.10762 7.41416 9.04768C7.26291 8.98774 7.12569 8.89717 7.01113 8.78166C6.89656 8.66615 6.80711 8.5282 6.74841 8.37647C6.6897 8.22474 6.66301 8.06251 6.67 7.89997C6.66281 7.73567 6.69004 7.57169 6.74995 7.41854C6.80986 7.26538 6.90112 7.12644 7.01787 7.01063C7.13463 6.89481 7.2743 6.80468 7.42793 6.74602C7.58157 6.68735 7.74577 6.66145 7.91 6.66997C8.07259 6.66431 8.2346 6.69232 8.38584 6.75226C8.53709 6.8122 8.67431 6.90277 8.78887 7.01828C8.90344 7.13379 8.99289 7.27174 9.05159 7.42347C9.1103 7.5752 9.13699 7.73743 9.13 7.89997C9.13719 8.06427 9.10996 8.22825 9.05005 8.3814C8.99014 8.53456 8.89888 8.6735 8.78213 8.78931C8.66537 8.90513 8.5257 8.99526 8.37207 9.05392C8.21843 9.11259 8.05423 9.13849 7.89 9.12997ZM17.34 17.34H15V13.44C15 12.51 14.67 11.87 13.84 11.87C13.5822 11.8722 13.3313 11.9541 13.1219 12.1045C12.9124 12.2549 12.7546 12.4664 12.67 12.71C12.605 12.8926 12.5778 13.0865 12.59 13.28V17.34H10.29V10.21H12.59V11.21C12.7945 10.8343 13.0988 10.5225 13.4694 10.3089C13.84 10.0954 14.2624 9.98848 14.69 9.99997C16.2 9.99997 17.34 11 17.34 13.13V17.34Z"
+                    fill="#f97316"
+                  ></path>
+                </g>
+              </svg>
+            </a>
+            <!-- Blog Link -->
+            <a
+              href="https://blog.zeoxer.com"
+              target="_blank"
+              title="Blog 連結"
+              class="text-primary-orange hover:text-primary-hover transition duration-150 p-2 rounded-full hover:bg-orange-100"
+            >
+              <svg
+                width="24"
+                height="24"
+                version="1.1"
+                id="_x32_"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                viewBox="0 0 512 512"
+                xml:space="preserve"
+                fill="#000000"
+              >
+                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                <g
+                  id="SVGRepo_tracerCarrier"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></g>
+                <g id="SVGRepo_iconCarrier">
+                  <style type="text/css">
+                    .st0 {
+                      fill: #f97316;
+                    }
+                  </style>
+                  <g>
+                    <rect
+                      x="293.186"
+                      y="307.184"
+                      class="st0"
+                      width="131.572"
+                      height="112.986"
+                    ></rect>
+                    <rect
+                      x="87.243"
+                      y="308.893"
+                      class="st0"
+                      width="154.448"
+                      height="17.162"
+                    ></rect>
+                    <rect
+                      x="87.243"
+                      y="401.298"
+                      class="st0"
+                      width="154.448"
+                      height="17.162"
+                    ></rect>
+                    <rect
+                      x="87.243"
+                      y="355.1"
+                      class="st0"
+                      width="154.448"
+                      height="17.162"
+                    ></rect>
+                    <path
+                      class="st0"
+                      d="M416.428,0.004H95.58C42.787,0.013,0.016,42.792,0,95.577v303.685 c0.025,62.262,50.463,112.717,112.742,112.734h286.524c62.27-0.017,112.717-50.464,112.734-112.734V95.577 C511.992,42.792,469.212,0.013,416.428,0.004z M464.805,399.262c-0.008,18.15-7.308,34.424-19.198,46.34 c-11.916,11.891-28.19,19.19-46.34,19.198H112.742c-18.15-0.009-34.433-7.308-46.348-19.198 c-11.892-11.916-19.182-28.19-19.198-46.34V118.696h417.61V399.262z"
+                    ></path>
+                    <path
+                      class="st0"
+                      d="M88.96,267.908h34.583c19.71,0,31.642-8.581,31.642-26.548c0-10.852-6.167-18.368-12.2-20.648v-0.268 c6.034-3.352,10.592-9.519,10.592-19.432c0-14.489-9.251-24.268-29.086-24.268H88.96c-0.796,0-1.332,0.536-1.332,1.34v88.475 C87.628,267.371,88.164,267.908,88.96,267.908z M107.338,193.495c0-0.528,0.251-0.804,0.804-0.804h13.944 c7.5,0,11.925,3.888,11.925,10.584c0,6.712-4.425,10.734-11.925,10.734h-13.944c-0.553,0-0.804-0.268-0.804-0.804V193.495z M107.338,229.955c0-0.528,0.251-0.795,0.804-0.795h15c8.061,0,12.343,4.424,12.343,11.405c0,7.097-4.282,11.396-12.343,11.396h-15 c-0.553,0-0.804-0.276-0.804-0.812V229.955z"
+                    ></path>
+                    <path
+                      class="st0"
+                      d="M181.516,267.908h59.404c0.796,0,1.332-0.536,1.332-1.349v-14.874c0-0.813-0.536-1.341-1.332-1.341h-40.224 c-0.544,0-0.804-0.268-0.804-0.812v-71.447c0-0.804-0.528-1.34-1.341-1.34h-17.036c-0.805,0-1.332,0.536-1.332,1.34v88.475 C180.183,267.371,180.711,267.908,181.516,267.908z"
+                    ></path>
+                    <path
+                      class="st0"
+                      d="M292.708,269.374c15.963,0,28.558-7.366,33.251-22.115c2.011-6.301,2.539-11.396,2.539-24.938 c0-13.542-0.528-18.637-2.539-24.939c-4.693-14.739-17.288-22.114-33.251-22.114c-15.956,0-28.558,7.375-33.243,22.114 c-2.02,6.302-2.556,11.397-2.556,24.939c0,13.542,0.536,18.637,2.556,24.938C264.149,262.009,276.752,269.374,292.708,269.374z M278.361,202.746c2.011-6.301,6.847-10.055,14.346-10.055c7.508,0,12.335,3.754,14.346,10.055 c1.073,3.226,1.474,7.634,1.474,19.576c0,11.924-0.402,16.357-1.474,19.567c-2.011,6.31-6.838,10.072-14.346,10.072 c-7.5,0-12.335-3.763-14.346-10.072c-1.064-3.21-1.475-7.643-1.475-19.567C276.886,210.38,277.297,205.972,278.361,202.746z"
+                    ></path>
+                    <path
+                      class="st0"
+                      d="M387.961,269.374c16.081,0,28.685-8.171,33.251-22.794c1.6-4.952,2.263-12.46,2.263-20.505v-7.517 c0-0.788-0.536-1.333-1.332-1.333h-31.366c-0.813,0-1.349,0.545-1.349,1.333v12.888c0,0.796,0.536,1.332,1.349,1.332h12.326 c0.536,0,0.805,0.277,0.805,0.805c0,3.879-0.403,6.703-1.073,8.991c-1.878,6.026-7.777,9.386-14.614,9.386 c-7.91,0-12.88-3.763-14.891-10.072c-1.064-3.21-1.466-7.643-1.466-19.567c0-11.941,0.402-16.223,1.466-19.441 c2.011-6.302,6.847-10.19,14.631-10.19c7.5,0,12.05,3.218,15.678,9.385c0.269,0.67,0.939,0.939,1.886,0.67l14.338-6.033 c0.796-0.402,0.947-1.206,0.536-2.019c-4.299-10.995-15.419-19.425-32.439-19.425c-16.232,0-28.835,7.375-33.527,22.114 c-2.012,6.302-2.556,11.397-2.556,24.939c0,13.542,0.545,18.637,2.556,24.938C359.126,262.009,371.73,269.374,387.961,269.374z"
+                    ></path>
+                  </g>
+                </g>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <footer
+        class="text-center text-sm text-gray-400 pt-4 border-t border-gray-100"
+      >
+        &copy; 2025 ZeoXer. All rights reserved.
+      </footer>
+    </main>
+
+    <script>
+      const BACKEND_API_URL = "http://localhost:3000";
+
+      const inputElement = document.getElementById("longUrlInput");
+      const buttonElement = document.getElementById("shortenButton");
+      const resultContainer = document.getElementById("resultContainer");
+      const resultText = document.getElementById("resultText");
+      const messageElement = document.getElementById("message");
+      const loadingIndicator = document.getElementById("loadingIndicator");
+
+      // 複製短網址到剪貼簿
+      function copyToClipboard() {
+        const textToCopy = resultText.textContent.replace("短網址： ", "");
+        try {
+          // 使用 execCommand 確保在 iFrame 環境下也能運作
+          const tempInput = document.createElement("input");
+          tempInput.value = textToCopy;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand("copy");
+          document.body.removeChild(tempInput);
+
+          // 簡短提示
+          const copyButton = document.getElementById("copyButton");
+          copyButton.textContent = "已複製!";
+          setTimeout(() => {
+            copyButton.textContent = "複製";
+          }, 2000);
+        } catch (err) {
+          console.error("無法複製到剪貼簿:", err);
+          messageElement.textContent = "複製失敗，請手動複製網址。";
+        }
+      }
+
+      // 處理短網址轉換邏輯
+      buttonElement.addEventListener("click", async () => {
+        const longUrl = inputElement.value.trim();
+        messageElement.textContent = "";
+        resultContainer.classList.add("hidden");
+        resultText.textContent = "";
+
+        if (!longUrl) {
+          messageElement.textContent = "請輸入一個有效的長網址。";
+          return;
+        }
+
+        // 簡單的網址格式檢查
+        if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
+          messageElement.textContent = "網址必須以 http:// 或 https:// 開頭。";
+          return;
+        }
+
+        // 顯示載入狀態
+        buttonElement.disabled = true;
+        loadingIndicator.classList.remove("hidden");
+
+        try {
+          // 呼叫 NestJS 後端 API
+          const response = await fetch(`${BACKEND_API_URL}/url/shorten`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ originalUrl: longUrl }),
+          });
+
+          // 處理回應
+          const data = await response.json();
+
+          if (response.ok) {
+            // 成功取得短網址
+            const shortUrl = data.shortUrl;
+
+            resultText.textContent = `短網址： ${BACKEND_API_URL}/${shortUrl}`;
+            resultContainer.classList.remove("hidden");
+
+            // 自動複製
+            copyToClipboard();
+          } else {
+            // 處理後端傳回的錯誤 (例如網址無效、限流等)
+            const errorMessage = data.message || "短網址服務發生錯誤。";
+            messageElement.textContent = `錯誤: ${errorMessage} (狀態碼: ${response.status})`;
+          }
+        } catch (error) {
+          console.error("Fetch Error:", error);
+          messageElement.textContent =
+            "連線到伺服器失敗，請檢查網路或 CORS 設定。";
+        } finally {
+          // 清除載入狀態
+          buttonElement.disabled = false;
+          loadingIndicator.classList.add("hidden");
+        }
+      });
+    </script>
+  </body>
+</html>
